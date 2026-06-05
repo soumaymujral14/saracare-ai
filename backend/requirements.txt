@@ -3,3 +3,4 @@ uvicorn
 pydantic
 twilio
 python-dotenv
+aiofiles

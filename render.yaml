@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: saracare-ai
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_NUMBER
+        value: "whatsapp:+14155238886"
+      - key: CAREGIVER_WHATSAPP
+        value: "whatsapp:+91XXXXXXXXXX"
