@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaraCare AI Patient Safety Monitor</title>
+    <!-- Google Fonts for modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fa-solid fa-heart-pulse logo-icon"></i>
+                <div class="title-meta">
+                    <h1>SaraCare AI Patient Safety Monitor</h1>
+                    <p class="subtitle">24/7 AI safety alert layer for elderly and bed-rest patients</p>
+                </div>
+            </div>
+            <div class="monitoring-control-top">
+                <button id="startMonitoringBtn" class="btn btn-primary btn-glow" onclick="startMonitoring()">
+                    <i class="fa-solid fa-play"></i> Start Monitoring
+                </button>
+                <button id="requestStopMonitoringBtn" class="btn btn-secondary hidden" onclick="requestStopMonitoring()">
+                    <i class="fa-solid fa-hand"></i> Request Stop Monitoring
+                </button>
+                <button id="simulateApprovalBtn" class="btn btn-secondary hidden" onclick="simulateApproval()" style="border-color: #a855f7; color: #d8b4fe;">
+                    <i class="fa-solid fa-check-double"></i> Simulate Caregiver Approval
+                </button>
+                <button id="global-mute-btn" class="btn btn-danger hidden">
+                    <i class="fa-solid fa-volume-xmark"></i> Mute / Dismiss Alarm
+                </button>
+            </div>
+        </header>
+
+        <!-- DISCLAIMER -->
+        <div class="disclaimer-banner">
+            <i class="fa-solid fa-circle-info"></i>
+            <span><strong>Disclaimer:</strong> This is not a medical diagnosis tool. It is an AI safety alert layer to help caregivers respond faster. All emergency calls simulated are mock calls.</span>
+        </div>
+
+        <main class="dashboard-grid">
+            <!-- LEFT COLUMN: Patient Setup & TruGen -->
+            <div class="dash-column">
+                <!-- Patient Profile Form -->
+                <section class="card patient-profile-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-user-injured text-accent"></i>
+                        <h2>Patient Profile</h2>
+                    </div>
+                    <form id="profile-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patient-name">Patient Name</label>
+                                <input type="text" id="patient-name" value="Eleanor Vance" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="patient-age">Age</label>
+                                <input type="number" id="patient-age" value="82" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="patient-condition">Condition / Notes</label>
+                            <input type="text" id="patient-condition" value="Recovering from hip surgery, high fall risk" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="caregiver-name">Caregiver Name</label>
+                                <input type="text" id="caregiver-name" value="David Vance" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="caregiver-phone">Caregiver Phone (Mock)</label>
+                                <input type="tel" id="caregiver-phone" value="+1 (555) 019-2834" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="reminder-time">Daily Medicine Reminder Time</label>
+                            <span style="font-size: 0.65rem; color: var(--text-muted); margin-top: -0.25rem;">Use 24-hour time, e.g. 13:05 = 1:05 PM</span>
+                            <div class="reminder-input-wrapper">
+                                <input type="time" id="reminder-time" value="08:00">
+                                <span id="reminder-time-display" style="font-size: 0.8rem; color: var(--accent); font-weight: 600; display: inline-flex; align-items: center; white-space: nowrap; margin: 0 0.5rem;">(8:00 AM)</span>
+                                <button type="button" id="trigger-med-now-btn" class="btn btn-secondary btn-small">
+                                    <i class="fa-solid fa-clock"></i> Trigger Now
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Profile
+                        </button>
+                    </form>
+                </section>
+
+                <!-- TruGen Webhook Info -->
+                <section class="card trugen-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-bolt text-trugen"></i>
+                        <h2>TruGen AI Webhook Integration</h2>
+                    </div>
+                    <div class="trugen-info">
+                        <p>Simulate production AI alerts by sending HTTPS POST requests from external agents (e.g. TruGen) directly to the local backend:</p>
+                        <div class="code-block">
+                            <span class="method">POST</span>
+                            <span class="url">http://localhost:8000/trugen-alert</span>
+                        </div>
+                        <p class="description-small">Payload matches standard alert format. Stored alerts will populate the timeline in real-time.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- MIDDLE COLUMN: Live Stream & AI Companion -->
+            <div class="dash-column col-span-2">
+                <!-- Webcam Panel -->
+                <section class="card video-card">
+                    <div class="video-overlay-header">
+                        <div class="stream-status">
+                            <span class="status-indicator-dot inactive" id="status-dot"></span>
+                            <span class="status-text" id="status-label">Monitoring Stopped</span>
+                        </div>
+                        <div class="live-tag">LIVE FEED</div>
+                    </div>
+                    
+                    <div class="video-container">
+                        <!-- Placeholder when webcam is off -->
+                        <div class="video-placeholder" id="video-placeholder">
+                            <i class="fa-solid fa-video-slash placeholder-icon"></i>
+                            <p>Webcam Stream Offline</p>
+                            <p class="sub-placeholder-text">Click "Start Monitoring" above to start the live feed and trigger AI monitoring.</p>
+                        </div>
+                        <video id="webcam" autoplay playsinline class="hidden"></video>
+                        
+                        <!-- Status Indicator Overlay -->
+                        <div class="safety-badge safe" id="safety-badge">
+                            STATUS: SAFE
+                        </div>
+                    </div>
+
+                    <!-- Visual alert banner inside feed -->
+                    <div id="live-alert-banner" class="live-alert-banner hidden">
+                        <span class="pulse-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <span id="live-alert-text">POSSIBLE FALL DETECTED</span>
+                    </div>
+                </section>
+
+                <!-- Sara AI Companion Card -->
+                <section class="card companion-card">
+                    <div class="companion-layout">
+                        <div class="companion-avatar">
+                            <div class="avatar-ring">
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                        </div>
+                        <div class="companion-body">
+                            <h3>Sara AI Companion</h3>
+                            <p class="companion-placeholder">“Sara is watching and ready to alert caregivers.”</p>
+                            <div class="companion-metrics">
+                                <span class="metric"><i class="fa-solid fa-shield-halved"></i> Guard: Active</span>
+                                <span class="metric"><i class="fa-solid fa-wifi"></i> Latency: 42ms</span>
+                                <span class="metric"><i class="fa-solid fa-microphone"></i> Audio Guard: On</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Demo Safety Triggers -->
+                <section class="card triggers-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-flask text-accent"></i>
+                        <h2>Demo Safety Triggers (Simulation)</h2>
+                    </div>
+                    <div class="trigger-grid">
+                        <button class="btn btn-trigger trigger-fall" onclick="triggerAlert('fall')">
+                            <i class="fa-solid fa-user-ninja"></i>
+                            <span>Possible Fall</span>
+                        </button>
+                        <button class="btn btn-trigger trigger-risky" onclick="triggerAlert('risky_movement')">
+                            <i class="fa-solid fa-person-walking-arrow-loop-left"></i>
+                            <span>Risky Movement</span>
+                        </button>
+                        <button class="btn btn-trigger trigger-exit" onclick="triggerAlert('frame_exit')">
+                            <i class="fa-solid fa-door-open"></i>
+                            <span>Frame Exit</span>
+                        </button>
+                        <button class="btn btn-trigger trigger-medicine" onclick="triggerAlert('medicine')">
+                            <i class="fa-solid fa-pills"></i>
+                            <span>Medicine Time</span>
+                        </button>
+                        <button class="btn btn-trigger trigger-voice" onclick="triggerAlert('voice_help')">
+                            <i class="fa-solid fa-microphone-lines"></i>
+                            <span>Voice Help Req</span>
+                        </button>
+                        <button class="btn btn-trigger trigger-emergency" onclick="triggerAlert('emergency')">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>Emergency</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT COLUMN: Alert History / Logs -->
+            <div class="dash-column">
+                <section class="card timeline-card">
+                    <div class="card-header justify-between">
+                        <div class="header-left">
+                            <i class="fa-solid fa-receipt text-accent"></i>
+                            <h2>Safety Incident Log</h2>
+                        </div>
+                        <span class="timeline-badge" id="timeline-count">0 alerts</span>
+                    </div>
+                    <div class="timeline-container" id="timeline-container">
+                        <!-- Placeholder when timeline is empty -->
+                        <div class="timeline-placeholder" id="timeline-placeholder">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <p>No safety incidents logged yet.</p>
+                        </div>
+                        <div class="timeline" id="timeline">
+                            <!-- Dynamic alerts go here -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MOCK CALL MODAL -->
+    <div class="modal-backdrop hidden" id="call-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="pulse-call-ring">
+                    <i class="fa-solid fa-phone-volume"></i>
+                </div>
+                <h2>SIMULATING CAREGIVER MOCK CALL</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">An urgent safety trigger has initiated a mock notification phone call to the primary caregiver.</p>
+                <div class="call-details-box">
+                    <div class="detail-row">
+                        <span class="detail-label">Caregiver:</span>
+                        <strong id="modal-caregiver-name">David Vance</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Phone:</span>
+                        <strong id="modal-caregiver-phone">+1 (555) 019-2834</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Alert Message:</span>
+                        <span id="modal-alert-msg" class="alert-msg-preview">"Possible fall detected for Eleanor Vance. Please check on them."</span>
+                    </div>
+                </div>
+                <div class="modal-status">
+                    <span class="pulse-dot"></span> Calling... (Simulation active)
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger w-100" id="close-modal-btn">
+                    <i class="fa-solid fa-phone-slash"></i> End Mock Call & Mute Alarm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO FOR CRITICAL ALARM -->
+    <!-- We can generate a simple beep via Web Audio API dynamically to avoid external asset requirements. This is much cleaner! -->
+    <script src="app.js"></script>
+</body>
+</html>
