@@ -4,3 +4,5 @@ pydantic
 twilio
 python-dotenv
 aiofiles
+sqlalchemy
+psycopg2-binary

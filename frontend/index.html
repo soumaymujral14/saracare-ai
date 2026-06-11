@@ -4,28 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SaraCare AI Patient Safety Monitor</title>
-    <!-- Google Fonts for modern typography -->
+    <meta name="description" content="Camera-based patient safety monitor with AI pose detection and TruGen Sara conversation companion.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
+
         <!-- HEADER -->
         <header class="app-header">
             <div class="logo-area">
                 <i class="fa-solid fa-heart-pulse logo-icon"></i>
                 <div class="title-meta">
                     <h1>SaraCare AI Patient Safety Monitor</h1>
-                    <p class="subtitle">24/7 AI safety alert layer for elderly and bed-rest patients</p>
+                    <p class="subtitle">Camera safety monitoring + TruGen Sara AI companion</p>
                 </div>
             </div>
             <div class="monitoring-control-top">
-                <button id="startMonitoringBtn" class="btn btn-primary btn-glow" onclick="startMonitoring()">
-                    <i class="fa-solid fa-play"></i> Start Monitoring
+                <button id="startCameraSetupBtn" class="btn btn-primary btn-glow" onclick="window.startCameraSetup()">
+                    <i class="fa-solid fa-camera"></i> Start Camera Setup
+                </button>
+                <button id="reconfigureFrameBtn" class="btn btn-secondary hidden" onclick="window.reconfigureFrame()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Reconfigure Frame
+                </button>
+                <button id="voiceMuteBtn" class="btn btn-secondary hidden" onclick="window.toggleVoiceMute()" title="Mute/unmute safety voice announcements">
+                    <i class="fa-solid fa-volume-high" id="voice-mute-icon"></i> Voice
                 </button>
                 <button id="requestStopMonitoringBtn" class="btn btn-secondary hidden" onclick="requestStopMonitoring()">
                     <i class="fa-solid fa-hand"></i> Request Stop Monitoring
@@ -42,13 +48,45 @@
         <!-- DISCLAIMER -->
         <div class="disclaimer-banner">
             <i class="fa-solid fa-circle-info"></i>
-            <span><strong>Disclaimer:</strong> This is not a medical diagnosis tool. It is an AI safety alert layer to help caregivers respond faster. All emergency calls simulated are mock calls.</span>
+            <span><strong>Disclaimer:</strong> Camera pose detection is heuristic and not a certified medical device. It assists caregivers but is not a substitute for professional care.</span>
+        </div>
+
+        <!-- DUAL STATUS BAR: Monitoring Layer + Sara Layer (separate, honest) -->
+        <div class="dual-status-bar" id="dual-status-bar">
+            <!-- Monitoring status -->
+            <div class="status-panel monitoring-panel">
+                <div class="status-panel-label"><i class="fa-solid fa-video"></i> Monitoring</div>
+                <div class="status-panel-items">
+                    <span class="status-chip" id="chip-camera">
+                        <span class="status-indicator-dot inactive" id="chip-camera-dot"></span>
+                        <span id="chip-camera-text">Camera Offline</span>
+                    </span>
+                    <span class="status-chip" id="chip-frame">
+                        <span class="status-indicator-dot inactive" id="chip-frame-dot"></span>
+                        <span id="chip-frame-text">Frame Not Set</span>
+                    </span>
+                    <span class="status-chip" id="chip-vision">
+                        <span class="status-indicator-dot inactive" id="vision-status-dot"></span>
+                        <span id="vision-status-text">Vision: Not Started</span>
+                    </span>
+                </div>
+            </div>
+            <!-- Sara status -->
+            <div class="status-panel sara-panel">
+                <div class="status-panel-label"><i class="fa-solid fa-brain"></i> Sara</div>
+                <div class="status-panel-items">
+                    <span class="status-chip" id="chip-sara">
+                        <span class="status-indicator-dot inactive" id="chip-sara-dot"></span>
+                        <span id="chip-sara-text">Sara Offline</span>
+                    </span>
+                </div>
+            </div>
         </div>
 
         <main class="dashboard-grid">
-            <!-- LEFT COLUMN: Patient Setup & TruGen -->
+            <!-- LEFT COLUMN -->
             <div class="dash-column">
-                <!-- Patient Profile Form -->
+                <!-- Patient Profile -->
                 <section class="card patient-profile-card">
                     <div class="card-header">
                         <i class="fa-solid fa-user-injured text-accent"></i>
@@ -69,25 +107,27 @@
                             <label for="patient-condition">Condition / Notes</label>
                             <input type="text" id="patient-condition" value="Recovering from hip surgery, high fall risk" required>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="caregiver-name">Caregiver Name</label>
-                                <input type="text" id="caregiver-name" value="David Vance" required>
+                        <div class="hidden" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="caregiver-name">Caregiver Name</label>
+                                    <input type="text" id="caregiver-name" value="David Vance" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="caregiver-phone">Caregiver Phone (Mock)</label>
+                                    <input type="tel" id="caregiver-phone" value="+1 (555) 019-2834" required>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label for="caregiver-phone">Caregiver Phone (Mock)</label>
-                                <input type="tel" id="caregiver-phone" value="+1 (555) 019-2834" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="reminder-time">Daily Medicine Reminder Time</label>
-                            <span style="font-size: 0.65rem; color: var(--text-muted); margin-top: -0.25rem;">Use 24-hour time, e.g. 13:05 = 1:05 PM</span>
-                            <div class="reminder-input-wrapper">
-                                <input type="time" id="reminder-time" value="08:00">
-                                <span id="reminder-time-display" style="font-size: 0.8rem; color: var(--accent); font-weight: 600; display: inline-flex; align-items: center; white-space: nowrap; margin: 0 0.5rem;">(8:00 AM)</span>
-                                <button type="button" id="trigger-med-now-btn" class="btn btn-secondary btn-small">
-                                    <i class="fa-solid fa-clock"></i> Trigger Now
-                                </button>
+                                <label for="reminder-time">Daily Medicine Reminder Time</label>
+                                <span style="font-size: 0.65rem; color: var(--text-muted); margin-top: -0.25rem;">Use 24-hour time, e.g. 13:05 = 1:05 PM</span>
+                                <div class="reminder-input-wrapper">
+                                    <input type="time" id="reminder-time" value="08:00">
+                                    <span id="reminder-time-display" style="font-size: 0.8rem; color: var(--accent); font-weight: 600; display: inline-flex; align-items: center; white-space: nowrap; margin: 0 0.5rem;">(8:00 AM)</span>
+                                    <button type="button" id="trigger-med-now-btn" class="btn btn-secondary btn-small">
+                                        <i class="fa-solid fa-clock"></i> Trigger Now
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-secondary w-100">
@@ -95,6 +135,66 @@
                         </button>
                     </form>
                 </section>
+
+                <!-- CAREGIVERS PANEL -->
+                <section class="card caregivers-card" id="caregivers-panel">
+                    <div class="card-header justify-between">
+                        <div class="header-left">
+                            <i class="fa-solid fa-user-nurse text-accent"></i>
+                            <h2>Caregivers Coordination</h2>
+                        </div>
+                        <button class="btn btn-secondary btn-small" onclick="openAddCaregiverModal()">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                    
+                    <div class="routing-settings-box">
+                        <div class="form-group">
+                            <label for="routing-mode-select">Caregiver Alert Mode</label>
+                            <select id="routing-mode-select" class="form-control" onchange="updateRoutingSettings()">
+                                <option value="broadcast">Broadcast to Everyone</option>
+                                <option value="smart">Smart Duty Routing</option>
+                            </select>
+                        </div>
+                        <div class="form-group-checkbox">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="critical-broadcast-check" checked onchange="updateRoutingSettings()">
+                                <span>Critical alerts always broadcast to all</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="caregivers-list" class="caregivers-list">
+                        <p class="placeholder-text">Loading caregivers...</p>
+                    </div>
+                </section>
+
+                <!-- INTEGRATION STATUS PANEL -->
+                <section class="card integration-status-card" id="integration-status-panel">
+                    <div class="card-header">
+                        <i class="fa-solid fa-server text-accent"></i>
+                        <h2>Integration Status (Admin)</h2>
+                    </div>
+                    <div class="integration-grid">
+                        <div class="integration-item">
+                            <span class="label">Twilio Mode:</span>
+                            <span id="twilio-mode-badge" class="badge">Checking...</span>
+                        </div>
+                        <div class="integration-item">
+                            <span class="label">WhatsApp Config:</span>
+                            <span id="whatsapp-config-badge" class="badge">Checking...</span>
+                        </div>
+                        <div class="integration-item">
+                            <span class="label">Voice Config:</span>
+                            <span id="voice-config-badge" class="badge">Checking...</span>
+                        </div>
+                        <div id="twilio-error-container" class="twilio-error-container hidden">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span id="twilio-error-text">Sandbox opt-in required.</span>
+                        </div>
+                    </div>
+                </section>
+
 
                 <!-- TruGen Webhook Info -->
                 <section class="card trugen-card">
@@ -113,42 +213,157 @@
                 </section>
             </div>
 
-            <!-- MIDDLE COLUMN: Live Stream & AI Companion -->
+            <!-- MIDDLE COLUMN: Main Monitoring Panel -->
             <div class="dash-column col-span-2">
-                <!-- Webcam Panel -->
-                <section class="card video-card">
+
+                <!-- MAIN MONITORING PANEL -->
+                <section class="card video-card" id="main-monitoring-panel">
+                    <!-- Overlay Header -->
                     <div class="video-overlay-header">
                         <div class="stream-status">
                             <span class="status-indicator-dot inactive" id="status-dot"></span>
-                            <span class="status-text" id="status-label">Monitoring Stopped</span>
+                            <span class="status-text" id="status-label">Camera Setup Required</span>
+                        </div>
+                        <!-- View switch — hidden until frame confirmed -->
+                        <div id="view-switch-container" class="view-switch hidden">
+                            <button id="view-btn-sara" class="view-btn active" onclick="window.switchView('sara')">
+                                <i class="fa-solid fa-brain"></i> Talk to Sara
+                            </button>
+                            <button id="view-btn-camera" class="view-btn" onclick="window.switchView('camera')">
+                                <i class="fa-solid fa-video"></i> Camera View
+                            </button>
                         </div>
                         <div class="live-tag">LIVE FEED</div>
                     </div>
-                    
-                    <div class="video-container">
-                        <!-- Placeholder when webcam is off -->
-                        <div class="video-placeholder" id="video-placeholder">
-                            <i class="fa-solid fa-video-slash placeholder-icon"></i>
-                            <p>Webcam Stream Offline</p>
-                            <p class="sub-placeholder-text">Click "Start Monitoring" above to start the live feed and trigger AI monitoring.</p>
+
+                    <div class="video-container" id="video-container">
+
+                        <!-- LAYER 1: Camera Setup Panel (shown before camera starts) -->
+                        <div id="camera-setup-panel" class="setup-panel">
+                            <div id="setup-initial-state" class="setup-initial">
+                                <i class="fa-solid fa-camera-rotate setup-big-icon"></i>
+                                <p class="setup-title">Camera Setup Required</p>
+                                <p class="setup-desc">Before Sara becomes available, position the camera so the patient's complete sleeping position and bed area are visible.</p>
+                                <button class="btn btn-primary btn-glow" onclick="window.startCameraSetup()">
+                                    <i class="fa-solid fa-camera"></i> Start Camera Setup
+                                </button>
+                            </div>
                         </div>
-                        <video id="webcam" autoplay playsinline class="hidden"></video>
-                        
-                        <!-- Status Indicator Overlay -->
-                        <div class="safety-badge safe" id="safety-badge">
-                            STATUS: SAFE
+
+                        <!-- LAYER 2: Live camera video (persistent — never destroyed) -->
+                        <video id="webcam" autoplay playsinline muted class="hidden"></video>
+
+                        <!-- LAYER 3: Frame setup checklist overlay (over live video) -->
+                        <div id="camera-setup-checklist" class="setup-checklist-overlay hidden">
+                            <div class="checklist-card">
+                                <div class="checklist-header">
+                                    <i class="fa-solid fa-list-check text-accent"></i>
+                                    <span>Frame Setup Checklist</span>
+                                </div>
+                                <p class="checklist-instruction">Position the camera so the patient's complete sleeping position, full body, and important bed area are clearly visible.</p>
+                                <ul class="checklist-items">
+                                    <li><i class="fa-solid fa-circle-check text-accent"></i> Patient's head is visible</li>
+                                    <li><i class="fa-solid fa-circle-check text-accent"></i> Upper body is visible</li>
+                                    <li><i class="fa-solid fa-circle-check text-accent"></i> Legs and feet are visible</li>
+                                    <li><i class="fa-solid fa-circle-check text-accent"></i> Bed edges and surrounding safety area are visible</li>
+                                    <li><i class="fa-solid fa-circle-check text-accent"></i> Image is clear and stable</li>
+                                    <li><i class="fa-solid fa-circle-check text-accent"></i> Patient's normal sleeping position fits inside the frame</li>
+                                </ul>
+                                <label class="frame-confirm-label">
+                                    <input type="checkbox" id="frame-confirm-check" onchange="window.onFrameCheckboxChange()">
+                                    <span>The patient's complete sleeping position and bed safety area are visible.</span>
+                                </label>
+                                <button id="setFrameBtn" class="btn btn-primary w-100 mt-1" disabled onclick="window.confirmMonitoringFrame()">
+                                    <i class="fa-solid fa-crosshairs"></i> Set Monitoring Frame
+                                </button>
+                                <div id="camera-error-msg" class="camera-error-msg hidden"></div>
+                            </div>
                         </div>
+
+                        <!-- LAYER 4: Sara Companion iframe view -->
+                        <div id="sara-companion-container" class="sara-companion-view hidden">
+                            <!-- Background camera monitoring indicator -->
+                            <div class="privacy-indicator">
+                                <span class="status-indicator-dot active" id="bg-cam-dot"></span>
+                                <span id="bg-cam-label">Camera monitoring active in background</span>
+                            </div>
+                            <!-- Sara states -->
+                            <div id="sara-state-unavailable" class="sara-state-msg hidden">
+                                <i class="fa-solid fa-brain sara-state-icon"></i>
+                                <p class="sara-state-title">Complete Camera Setup First</p>
+                                <p class="sara-state-desc">Sara will be available after you confirm the monitoring frame.</p>
+                            </div>
+                            <div id="sara-state-connecting" class="sara-state-msg hidden">
+                                <i class="fa-solid fa-spinner fa-spin sara-state-icon"></i>
+                                <p class="sara-state-title">Connecting to Sara…</p>
+                                <p class="sara-state-desc">Starting the Sara AI companion session.</p>
+                            </div>
+                            <div id="sara-state-ended" class="sara-state-msg hidden">
+                                <i class="fa-solid fa-brain sara-state-icon" style="color: var(--text-muted);"></i>
+                                <p class="sara-state-title">Sara Conversation Ended</p>
+                                <p class="sara-state-desc">Camera monitoring and pose detection remain active.</p>
+                                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-top:0.75rem;">
+                                    <button class="btn btn-primary btn-small" onclick="window.retrySara()">
+                                        <i class="fa-solid fa-rotate"></i> Reconnect Sara
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="sara-state-error" class="sara-state-msg hidden">
+                                <i class="fa-solid fa-triangle-exclamation sara-state-icon" style="color: var(--severity-urgent);"></i>
+                                <p class="sara-state-title">Connection Failed</p>
+                                <p class="sara-state-desc">Could not connect to Sara. Camera monitoring continues.</p>
+                                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-top:0.5rem;">
+                                    <button class="btn btn-primary btn-small" onclick="window.retrySara()">
+                                        <i class="fa-solid fa-rotate"></i> Retry Sara
+                                    </button>
+                                    <button class="btn btn-secondary btn-small" onclick="window.reconfigureFrame()">
+                                        <i class="fa-solid fa-camera"></i> Camera Setup
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="sara-iframe-wrapper" class="sara-iframe-wrapper hidden">
+                                <!-- TruGen iframe injected dynamically -->
+                            </div>
+                            <!-- Camera conflict non-blocking notice -->
+                            <div id="cam-conflict-notice" class="cam-conflict-notice hidden">
+                                <i class="fa-solid fa-circle-info"></i>
+                                Patient monitoring camera remains active. Sara video-camera access may be limited on this device.
+                            </div>
+                            <!-- Sara session controls -->
+                            <div id="sara-active-controls" class="sara-active-controls hidden">
+                                <button class="btn btn-secondary btn-small" onclick="window.endSaraSession()">
+                                    <i class="fa-solid fa-power-off"></i> End Sara Session
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Status badge bottom-left -->
+                        <div class="safety-badge safe" id="safety-badge">STATUS: SETUP</div>
                     </div>
 
-                    <!-- Visual alert banner inside feed -->
+                    <!-- Alert banner (critical/urgent) -->
                     <div id="live-alert-banner" class="live-alert-banner hidden">
                         <span class="pulse-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                         <span id="live-alert-text">POSSIBLE FALL DETECTED</span>
                     </div>
                 </section>
 
-                <!-- Sara AI Companion Card -->
-                <section class="card companion-card">
+                <!-- ACTIVE ALERTS PANEL -->
+                <section class="card active-alerts-card" id="active-alerts-panel">
+                    <div class="card-header justify-between">
+                        <div class="header-left">
+                            <i class="fa-solid fa-bell text-danger animate-pulse"></i>
+                            <h2>Active Caregiver Alerts</h2>
+                        </div>
+                        <span class="timeline-badge" id="active-alerts-count">0 active</span>
+                    </div>
+                    <div id="active-alerts-list" class="active-alerts-list">
+                        <p class="placeholder-text"><i class="fa-solid fa-circle-check" style="color:var(--accent);"></i> All patients safe. No active caregiver alerts.</p>
+                    </div>
+                </section>
+
+                <!-- Companion Status Card (compact info below main panel) -->
+                <section class="card companion-card" id="companion-status-card">
                     <div class="companion-layout">
                         <div class="companion-avatar">
                             <div class="avatar-ring">
@@ -157,11 +372,11 @@
                         </div>
                         <div class="companion-body">
                             <h3>Sara AI Companion</h3>
-                            <p class="companion-placeholder">“Sara is watching and ready to alert caregivers.”</p>
-                            <div class="companion-metrics">
-                                <span class="metric"><i class="fa-solid fa-shield-halved"></i> Guard: Active</span>
-                                <span class="metric"><i class="fa-solid fa-wifi"></i> Latency: 42ms</span>
-                                <span class="metric"><i class="fa-solid fa-microphone"></i> Audio Guard: On</span>
+                            <p class="companion-placeholder" id="sara-companion-status-text">"Complete camera setup to activate Sara."</p>
+                            <div class="companion-metrics" id="companion-metrics">
+                                <span class="metric"><i class="fa-solid fa-shield-halved"></i> Camera: <span id="guard-status">Offline</span></span>
+                                <span class="metric"><i class="fa-solid fa-eye"></i> Pose: <span id="pose-status">Not Started</span></span>
+                                <span class="metric"><i class="fa-solid fa-brain"></i> Sara: <span id="sara-metric-status">Offline</span></span>
                             </div>
                         </div>
                     </div>
@@ -202,8 +417,39 @@
                 </section>
             </div>
 
-            <!-- RIGHT COLUMN: Alert History / Logs -->
+            <!-- RIGHT COLUMN: Safety Incident Log -->
             <div class="dash-column">
+                <!-- MEDICINE ROUTINE PANEL -->
+                <section class="card medicine-routine-card" id="medicine-routine-panel">
+                    <div class="card-header justify-between">
+                        <div class="header-left">
+                            <i class="fa-solid fa-pills text-accent"></i>
+                            <h2>Medicine Routine</h2>
+                        </div>
+                        <button class="btn btn-secondary btn-small" onclick="openAddMedicineModal()">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                    
+                    <div class="medicine-subsections">
+                        <!-- Today's Schedule -->
+                        <div class="med-subsection">
+                            <h3>Today's Reminder Logs</h3>
+                            <div id="med-events-list" class="med-events-list">
+                                <p class="placeholder-text">No reminders triggered today.</p>
+                            </div>
+                        </div>
+
+                        <!-- Master Schedules -->
+                        <div class="med-subsection mt-1">
+                            <h3>Configured Schedules</h3>
+                            <div id="med-schedules-list" class="med-schedules-list">
+                                <p class="placeholder-text">No medicine schedules setup.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section class="card timeline-card">
                     <div class="card-header justify-between">
                         <div class="header-left">
@@ -213,14 +459,11 @@
                         <span class="timeline-badge" id="timeline-count">0 alerts</span>
                     </div>
                     <div class="timeline-container" id="timeline-container">
-                        <!-- Placeholder when timeline is empty -->
                         <div class="timeline-placeholder" id="timeline-placeholder">
                             <i class="fa-solid fa-clock-rotate-left"></i>
                             <p>No safety incidents logged yet.</p>
                         </div>
-                        <div class="timeline" id="timeline">
-                            <!-- Dynamic alerts go here -->
-                        </div>
+                        <div class="timeline" id="timeline"></div>
                     </div>
                 </section>
             </div>
@@ -258,14 +501,142 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger w-100" id="close-modal-btn">
-                    <i class="fa-solid fa-phone-slash"></i> End Mock Call & Mute Alarm
+                    <i class="fa-solid fa-phone-slash"></i> End Mock Call &amp; Mute Alarm
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- AUDIO FOR CRITICAL ALARM -->
-    <!-- We can generate a simple beep via Web Audio API dynamically to avoid external asset requirements. This is much cleaner! -->
+    <!-- CAREGIVER MODAL -->
+    <div class="modal-backdrop hidden" id="caregiver-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fa-solid fa-user-nurse text-accent modal-header-icon"></i>
+                <h2 id="caregiver-modal-title">Add Caregiver</h2>
+            </div>
+            <form id="caregiver-form" onsubmit="saveCaregiverSubmit(event)">
+                <input type="hidden" id="caregiver-form-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="cg-name">Caregiver Name *</label>
+                        <input type="text" id="cg-name" required placeholder="e.g. David Vance">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cg-whatsapp">WhatsApp Number *</label>
+                            <input type="text" id="cg-whatsapp" required placeholder="e.g. +91XXXXXXXXXX">
+                        </div>
+                        <div class="form-group">
+                            <label for="cg-phone">Calling Number (Optional)</label>
+                            <input type="text" id="cg-phone" placeholder="Defaults to WhatsApp number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cg-role">Role / Relationship</label>
+                            <input type="text" id="cg-role" placeholder="e.g. Son, Nurse">
+                        </div>
+                        <div class="form-group">
+                            <label for="cg-priority">Priority Order</label>
+                            <input type="number" id="cg-priority" value="1" min="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="cg-availability">Availability Status</label>
+                        <select id="cg-availability" class="form-control">
+                            <option value="available">Available</option>
+                            <option value="busy">Busy</option>
+                            <option value="off_duty">Off Duty</option>
+                        </select>
+                    </div>
+                    <div class="form-row mt-1">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="cg-whatsapp-enabled" checked>
+                            <span>WhatsApp Alerts Enabled</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="cg-calls-enabled" checked>
+                            <span>Voice Calls Enabled</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCaregiverModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="caregiver-save-btn">Save Caregiver</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MEDICINE MODAL -->
+    <div class="modal-backdrop hidden" id="medicine-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fa-solid fa-pills text-accent modal-header-icon"></i>
+                <h2 id="medicine-modal-title">Add Medicine</h2>
+            </div>
+            <form id="medicine-form" onsubmit="saveMedicineSubmit(event)">
+                <input type="hidden" id="medicine-form-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="med-name">Medicine Name *</label>
+                        <input type="text" id="med-name" required placeholder="e.g. Aricept">
+                    </div>
+                    <div class="form-group">
+                        <label for="med-dose">Dose / Instructions *</label>
+                        <input type="text" id="med-dose" required placeholder="e.g. 5mg, take with water">
+                    </div>
+                    <div class="form-group">
+                        <label for="med-times">Reminder Time(s) *</label>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); margin-top: -0.25rem;">Comma-separated 24h format, e.g. 08:00, 20:00</span>
+                        <input type="text" id="med-times" required placeholder="e.g. 08:00, 20:00">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="med-frequency">Frequency</label>
+                            <select id="med-frequency" class="form-control">
+                                <option value="once daily">Once Daily</option>
+                                <option value="twice daily">Twice Daily</option>
+                                <option value="three times daily">Three Times Daily</option>
+                                <option value="custom">Custom Times</option>
+                                <option value="one-time reminder">One-time Reminder</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="med-food">Before / After Food</label>
+                            <select id="med-food" class="form-control">
+                                <option value="">No preference</option>
+                                <option value="before food">Before Food</option>
+                                <option value="after food">After Food</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="med-notes">Notes</label>
+                        <input type="text" id="med-notes" placeholder="e.g. Keep in refrigerator">
+                    </div>
+                    <div class="form-row mt-1">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="med-supervision" checked>
+                            <span>Requires Caregiver Supervision</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="med-active" checked>
+                            <span>Active Schedule</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeMedicineModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="medicine-save-btn">Save Medicine</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vision detection module (independent of Sara/TruGen) -->
+    <script src="vision.js"></script>
+    <!-- Main app logic -->
     <script src="app.js"></script>
 </body>
 </html>
